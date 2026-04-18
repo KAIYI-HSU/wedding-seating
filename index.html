@@ -137,7 +137,6 @@
       0 1px 0 rgba(255,255,255,.8) inset,
       0 30px 60px -30px rgba(60,55,40,.25),
       0 10px 24px rgba(60,55,40,.08);
-    overflow:hidden;
   }
   .chart svg{width:100%;height:100%;display:block;}
 
@@ -505,9 +504,11 @@ function showTip(key, anchorEl, highlightName){
     const tipW = tip.offsetWidth;
     const gap  = 14;
 
-    // Flip only if it would overflow the TOP of the chart.
-    const wouldOverflowTop = (anchorTop - gap - tipH) < 4;
-    if (wouldOverflowTop){
+    // Prefer ABOVE. Only flip BELOW when ABOVE would overflow the viewport top
+    // (viewport-aware, not chart-aware — so tooltip never lands off-screen).
+    const safeTop = 8;
+    const wouldOverflowViewportTop = (chartRect.top + anchorTop - gap - tipH) < safeTop;
+    if (wouldOverflowViewportTop){
       tip.classList.add('below');
       tip.style.top = anchorBot + 'px';
     } else {
