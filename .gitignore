@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+
+# 原始設計檔（含未去識別化名單、原始座位圖、CSV）
+# 公開 repo 只需要根目錄的 index.html
+project/
+uploads/

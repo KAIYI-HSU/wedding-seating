@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>座位表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f1efe8;
+    --bg-2: #e9e6dc;
+    --table: #ded3bd;     /* round table beige */
+    --table-ink: #3a3a36;
+    --stage: #4f6b4e;     /* green stage */
+    --stage-ink: #f4f1e8;
+    --muted-ink:#6a6a63;
+    --accent: #8fa37d;
+    --danger:#b67b5a;
+    --shadow: 0 8px 24px rgba(60, 55, 40, .12);
+    --shadow-soft: 0 2px 8px rgba(60, 55, 40, .08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--table-ink);font-family:"Noto Serif TC", "Source Han Serif", serif;}
+  body{min-height:100vh;padding:24px 16px 60px;}
+
+  /* Decorative corners */
+  .decor{position:fixed;pointer-events:none;z-index:0;opacity:.45;}
+  .decor.tl{top:-40px;left:-40px;width:260px;height:260px;}
+  .decor.tr{top:-60px;right:-40px;width:280px;height:280px;transform:scaleX(-1)}
+  .decor.bl{bottom:-60px;left:-40px;width:220px;height:220px;transform:scaleY(-1)}
+
+  .shell{max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+
+  header{text-align:center;margin:18px 0 18px;}
+  h1{
+    font-family:"Noto Serif TC", serif;
+    font-weight:400;
+    font-size:clamp(40px, 6vw, 68px);
+    letter-spacing:.35em;
+    margin:0 0 4px;
+    color:#2e2e2a;
+  }
+  .subtitle{
+    font-family:"Cormorant Garamond", serif;
+    font-style:italic;
+    color:var(--muted-ink);
+    letter-spacing:.25em;
+    font-size:14px;
+  }
+
+  /* Search bar */
+  .search-wrap{
+    position:relative;
+    max-width:420px;
+    margin:24px auto 28px;
+    z-index:5;
+  }
+  .search{
+    width:100%;
+    padding:14px 48px 14px 48px;
+    border-radius:999px;
+    border:1px solid rgba(79,107,78,.25);
+    background:rgba(255,255,255,.75);
+    backdrop-filter: blur(6px);
+    font-family:inherit;
+    font-size:16px;
+    color:var(--table-ink);
+    box-shadow:var(--shadow-soft);
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .search::placeholder{color:#9a958a;letter-spacing:.05em;}
+  .search:focus{
+    border-color:var(--stage);
+    box-shadow:0 0 0 4px rgba(79,107,78,.12), var(--shadow-soft);
+  }
+  .search-icon{
+    position:absolute;left:18px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;color:var(--muted-ink);pointer-events:none;
+  }
+  .clear-btn{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    width:28px;height:28px;border-radius:50%;
+    background:transparent;border:none;cursor:pointer;
+    color:var(--muted-ink);
+    display:none;align-items:center;justify-content:center;
+    font-size:18px;line-height:1;
+    transition:background .15s;
+  }
+  .clear-btn:hover{background:rgba(0,0,0,.05);color:var(--table-ink);}
+  .clear-btn.show{display:flex;}
+
+  .suggestions{
+    position:absolute;top:calc(100% + 6px);left:0;right:0;
+    background:#fff;border-radius:14px;
+    box-shadow:0 12px 32px rgba(60,55,40,.18);
+    overflow:hidden;
+    max-height:320px;overflow-y:auto;
+    display:none;
+    border:1px solid rgba(0,0,0,.04);
+  }
+  .suggestions.show{display:block;}
+  .sugg-item{
+    padding:11px 18px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid rgba(0,0,0,.04);
+    transition:background .12s;
+  }
+  .sugg-item:last-child{border-bottom:none;}
+  .sugg-item:hover, .sugg-item.active{background:#f5f2e9;}
+  .sugg-name{font-size:15px;}
+  .sugg-name mark{background:rgba(143,163,125,.35);color:inherit;padding:0 2px;border-radius:2px;}
+  .sugg-table{
+    font-family:"Cormorant Garamond", serif;
+    font-size:13px;color:var(--muted-ink);
+    font-style:italic;letter-spacing:.05em;
+    white-space:nowrap;
+  }
+  .sugg-empty{padding:16px 18px;color:var(--muted-ink);font-size:14px;text-align:center;}
+
+  /* Chart */
+  .chart{
+    position:relative;
+    aspect-ratio: 720/960;
+    max-width:760px;
+    margin:0 auto;
+    background:
+      radial-gradient(60% 40% at 50% 8%,  rgba(143,163,125,.10) 0%, transparent 70%),
+      radial-gradient(80% 60% at 50% 100%, rgba(143,163,125,.08) 0%, transparent 70%),
+      linear-gradient(180deg, #f7f4ea 0%, #ede8d8 100%);
+    border-radius:22px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.8) inset,
+      0 30px 60px -30px rgba(60,55,40,.25),
+      0 10px 24px rgba(60,55,40,.08);
+    overflow:hidden;
+  }
+  .chart svg{width:100%;height:100%;display:block;}
+
+  /* Dim overlay when a table is focused */
+  .dim-layer{
+    position:absolute;inset:0;
+    background:rgba(30,30,26,.55);
+    opacity:0;pointer-events:none;
+    transition:opacity .35s ease;
+    z-index:2;
+  }
+  .chart.focused .dim-layer{opacity:1;}
+
+  /* Table nodes */
+  .table-node{
+    position:absolute;
+    border-radius:50%;
+    background: radial-gradient(120% 120% at 30% 25%, #e7dcc4 0%, #d9ccae 65%, #c9bb99 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    font-family:"Noto Serif TC", serif;
+    color:var(--table-ink);
+    cursor:pointer;
+    transition: transform .28s cubic-bezier(.2,.8,.3,1.2), box-shadow .28s ease, filter .35s ease, opacity .35s ease;
+    box-shadow:
+      inset 0 -6px 12px rgba(90,70,30,.10),
+      inset 0 2px 6px rgba(255,248,230,.55),
+      0 4px 10px rgba(70,55,30,.10);
+    user-select:none;
+    z-index:3;
+  }
+  .table-node .num{
+    font-size: clamp(20px, 2.8vw, 30px);
+    font-weight:500;
+    line-height:1;
+    margin-bottom:4px;
+  }
+  .table-node .label{
+    font-size: clamp(11px, 1.45vw, 14px);
+    line-height:1.2;
+    letter-spacing:.03em;
+    padding:0 6px;
+  }
+  .table-node.head .num{font-size: clamp(20px, 2.6vw, 28px);letter-spacing:.15em;margin-bottom:0;}
+
+  .table-node:hover{
+    transform:scale(1.06);
+    box-shadow:
+      inset 0 -6px 12px rgba(90,70,30,.10),
+      inset 0 2px 6px rgba(255,248,230,.6),
+      0 14px 28px rgba(60,55,40,.22);
+    z-index:6;
+  }
+
+  /* Stage & photo booth */
+  .stage-node, .booth-node{
+    position:absolute;
+    background:var(--stage);
+    color:var(--stage-ink);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: 0 6px 18px rgba(60,70,55,.25);
+    font-family:"Noto Serif TC", serif;
+    z-index:3;
+    transition: filter .35s ease, opacity .35s ease;
+  }
+  .stage-node{
+    border-radius:40px;
+    writing-mode:vertical-rl;
+    letter-spacing:.45em;
+    font-size: clamp(14px, 1.8vw, 20px);
+    background: linear-gradient(180deg, #5c7a5b 0%, #455f46 100%);
+    box-shadow:
+      0 10px 24px rgba(40,55,35,.28),
+      inset 0 2px 4px rgba(255,255,255,.12),
+      inset 0 -6px 10px rgba(0,0,0,.15);
+  }
+  .booth-node{
+    border-radius:22px;
+    font-size: clamp(14px, 1.8vw, 20px);
+    letter-spacing:.25em;
+    background: linear-gradient(180deg, #5c7a5b 0%, #455f46 100%);
+    box-shadow:
+      0 8px 18px rgba(40,55,35,.25),
+      inset 0 2px 4px rgba(255,255,255,.12),
+      inset 0 -4px 8px rgba(0,0,0,.14);
+  }
+
+  /* Focused state */
+  .chart.focused .table-node:not(.focus),
+  .chart.focused .stage-node:not(.focus),
+  .chart.focused .booth-node:not(.focus){
+    filter: brightness(.45) saturate(.7);
+    opacity:.75;
+  }
+  .table-node.focus{
+    z-index:8;
+    transform:scale(1.12);
+    box-shadow: 0 0 0 3px rgba(255,255,255,.6), 0 0 0 6px var(--stage), 0 12px 32px rgba(0,0,0,.28);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow: 0 0 0 3px rgba(255,255,255,.6), 0 0 0 6px var(--stage), 0 12px 32px rgba(0,0,0,.28);}
+    50%{box-shadow: 0 0 0 3px rgba(255,255,255,.8), 0 0 0 10px rgba(143,163,125,.55), 0 12px 32px rgba(0,0,0,.28);}
+  }
+
+  /* Tooltip (guest list popover) */
+  .tip{
+    position:absolute;
+    z-index:50;
+    background:#fff;
+    border-radius:12px;
+    padding:12px 16px;
+    box-shadow:0 14px 34px rgba(30,25,15,.22);
+    min-width:180px;max-width:240px;
+    pointer-events:none;
+    opacity:0;
+    /* default: placed ABOVE anchor (tip.top = anchor.top, so translate up by 100% + arrow gap) */
+    transform: translate(-50%, calc(-100% - 14px)) scale(.96);
+    transition: opacity .18s ease, transform .18s ease;
+    border:1px solid rgba(79,107,78,.15);
+  }
+  .tip.show{opacity:1;transform:translate(-50%, calc(-100% - 14px)) scale(1);}
+  /* when there's no room above, flip below: tip.top = anchor.bottom, translate only horizontally */
+  .tip.below{transform: translate(-50%, 14px) scale(.96);}
+  .tip.below.show{transform: translate(-50%, 14px) scale(1);}
+  .tip::after{
+    content:"";position:absolute;left:50%;bottom:-7px;
+    transform:translateX(-50%) rotate(45deg);
+    width:12px;height:12px;background:#fff;
+    border-right:1px solid rgba(79,107,78,.15);
+    border-bottom:1px solid rgba(79,107,78,.15);
+  }
+  .tip.below::after{
+    top:-7px;bottom:auto;
+    border-right:none;border-bottom:none;
+    border-left:1px solid rgba(79,107,78,.15);
+    border-top:1px solid rgba(79,107,78,.15);
+  }
+  .tip .tip-title{
+    font-size:13px;
+    color:var(--stage);
+    font-weight:500;
+    letter-spacing:.1em;
+    margin-bottom:6px;
+    border-bottom:1px solid rgba(79,107,78,.18);
+    padding-bottom:6px;
+  }
+  .tip ul{margin:0;padding:0;list-style:none;}
+  .tip li{
+    font-size:13px;line-height:1.55;
+    color:var(--table-ink);
+    padding:1px 0;
+  }
+  .tip li.highlight{
+    color:var(--stage);
+    font-weight:700;
+  }
+
+  /* Hint */
+  .hint{
+    text-align:center;
+    color:var(--muted-ink);
+    font-size:13px;
+    margin-top:18px;
+    letter-spacing:.1em;
+    font-family:"Cormorant Garamond", serif;
+    font-style:italic;
+  }
+
+  /* Mobile hint text */
+  @media (max-width: 600px){
+    body{padding:12px 6px 40px;}
+    h1{letter-spacing:.25em;}
+    .search-wrap{margin:16px auto 20px;}
+    .tip{min-width:150px;max-width:200px;padding:10px 12px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Decorative leaves (simple, abstract) -->
+<svg class="decor tl" viewBox="0 0 200 200" aria-hidden="true">
+  <g fill="#6d8a6b" opacity=".55">
+    <ellipse cx="40" cy="70" rx="34" ry="10" transform="rotate(30 40 70)"/>
+    <ellipse cx="80" cy="50" rx="28" ry="8" transform="rotate(55 80 50)"/>
+    <ellipse cx="60" cy="110" rx="30" ry="9" transform="rotate(20 60 110)"/>
+    <ellipse cx="110" cy="90" rx="22" ry="7" transform="rotate(70 110 90)"/>
+  </g>
+  <g fill="#efe3d3" opacity=".9">
+    <circle cx="30" cy="30" r="22"/>
+    <circle cx="70" cy="20" r="14"/>
+  </g>
+</svg>
+<svg class="decor tr" viewBox="0 0 200 200" aria-hidden="true">
+  <g fill="#6d8a6b" opacity=".55">
+    <ellipse cx="40" cy="70" rx="34" ry="10" transform="rotate(30 40 70)"/>
+    <ellipse cx="80" cy="50" rx="28" ry="8" transform="rotate(55 80 50)"/>
+    <ellipse cx="60" cy="110" rx="30" ry="9" transform="rotate(20 60 110)"/>
+  </g>
+  <g fill="#efe3d3" opacity=".9">
+    <circle cx="30" cy="30" r="22"/>
+    <circle cx="70" cy="20" r="14"/>
+  </g>
+</svg>
+
+<div class="shell">
+  <header>
+    <h1>座位表</h1>
+    <div class="subtitle">Seating Arrangement</div>
+  </header>
+
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input class="search" id="search" type="text" placeholder="搜尋賓客姓名 · Search guest name" autocomplete="off" />
+    <button class="clear-btn" id="clearBtn" aria-label="清除">×</button>
+    <div class="suggestions" id="suggestions" role="listbox"></div>
+  </div>
+
+  <div class="chart" id="chart">
+    <!-- Stage & photo booth rendered as divs, positioned in % -->
+    <div class="stage-node" data-key="stage" style="left:32%;top:13%;width:14%;height:70%;">走道</div>
+    <div class="booth-node" data-key="booth" style="left:71%;top:78%;width:16%;height:10%;">拍貼機</div>
+
+    <!-- Tables get injected by JS for maintainability -->
+
+    <div class="dim-layer"></div>
+    <div class="tip" id="tip" role="tooltip" aria-hidden="true"></div>
+  </div>
+
+  <div class="hint">Hover a table to see its guests · Type a name to locate</div>
+</div>
+
+<script>
+/* ---------- DATA ---------- */
+// Table layout matches the reference: left column 2–7, center 主桌 on top + stage + 13 bottom,
+// right column 8-9-10-11-12 and 14-15-16-17-18, photo booth bottom-right.
+// Circles are size% wide; center-to-center spacing must exceed `size` to avoid touching.
+// Stage occupies x:40-54%; any table on the same row must clear that band (+ padding).
+const TABLES = [
+  // center top — main table above walkway
+  { key:"main", num:"主桌",  label:"",            x:32, y:0,   size:17, type:"head" },
+  // left column
+  { key:"t2",   num:"2",     label:"男方親友",    x:14, y:10,  size:16 },
+  { key:"t3",   num:"3",     label:"男方親友",    x:14, y:24,  size:16 },
+  { key:"t4",   num:"4",     label:"男方親友 (素)", x:14, y:38, size:16 },
+  { key:"t5",   num:"5",     label:"男方研究所",  x:14, y:52,  size:16 },
+  { key:"t6",   num:"6",     label:"男方親友",    x:14, y:66,  size:16 },
+  { key:"t7",   num:"7",     label:"男方親友",    x:14, y:80,  size:16 },
+  // right-inner column (alongside walkway)
+  { key:"t8",   num:"8",     label:"女方親友",    x:49, y:10,  size:16 },
+  { key:"t9",   num:"9",     label:"ORP闆闆",    x:49, y:24,  size:16 },
+  { key:"t10",  num:"10",    label:"AAID闆闆",   x:49, y:38,  size:16 },
+  { key:"t11",  num:"11",    label:"炙手可熱",    x:49, y:52,  size:16 },
+  { key:"t12",  num:"12",    label:"女方研究所",  x:49, y:66,  size:16 },
+  { key:"t13",  num:"13",    label:"男方親友",    x:49, y:80,  size:16 },
+  // right-outer column
+  { key:"t14",  num:"14",    label:"女方親友",    x:71, y:4,   size:16 },
+  { key:"t15",  num:"15",    label:"女方親友",    x:71, y:18,  size:16 },
+  { key:"t16",  num:"16",    label:"ORP爪牙",    x:71, y:32,  size:16 },
+  { key:"t17",  num:"17",    label:"女方大學同學", x:71, y:46, size:16 },
+  { key:"t18",  num:"18",    label:"好麻吉",      x:71, y:60,  size:16 },
+];
+
+// Guests — built from the provided CSV.
+// Each entry: { name, tableKey }
+const RAW_GUESTS = [
+  ["main","新郎新娘"],["main","楷O爸媽"],["main","予O爸媽"],["main","謝O村"],
+  ["main","謝O章"],["main","歐O憲夫婦"],["main","黃O茹"],
+  ["t2","許O玲"],["t2","許O勇"],["t2","張O良"],["t2","黃O洋"],["t2","陳O明"],["t2","賴O宏"],
+  ["t3","歐O憲"],
+  ["t4","素O"],["t4","秋O"],["t4","雪O"],["t4","麗O"],["t4","麗O"],["t4","燕O"],["t4","戍O"],["t4","云O"],
+  ["t5","強O哲"],["t5","張O"],["t5","魏O珊"],["t5","謝O儒"],["t5","羅O泉"],["t5","施O廷"],["t5","徐O昕"],
+  ["t6","郭O輝"],["t6","郭O佳"],["t6","劉O軒"],["t6","游O奇"],["t6","陳O君"],
+  ["t7","蘇O桃"],["t7","鄭O升"],["t7","沈O毅"],["t7","沈O靜"],["t7","楊O田"],["t7","陳O怡"],
+  // 8 & 14 女方親友 — CSV groups them. We'll assign them all to table 8 (primary), and also show on 14 if you'd prefer. To keep it unambiguous, assign to 8 only.
+  ["t8","謝O村"],["t8","謝O涵"],["t8","謝O波"],["t8","謝O寬/謝O頡"],["t8","謝O麟"],["t8","謝O揚"],["t8","張O銜"],
+  ["t9","林O涵"],["t9","任O婷"],["t9","翁O瑋"],["t9","蔡O育"],["t9","黃O霖"],["t9","賴O筠"],["t9","陳O佑"],
+  ["t10","黃O誠"],["t10","陳O光"],["t10","李O涵"],["t10","洪O峰"],["t10","賴O億"],["t10","Eliza"],["t10","張O瑋"],["t10","游O誠"],
+  ["t11","陳O全"],["t11","黃O傑"],["t11","廖O童"],["t11","蔡O芳"],["t11","呂O庭"],["t11","林O君"],["t11","薛O程"],["t11","王O雅"],["t11","梁O隆"],["t11","孫O佑"],
+  ["t12","瞿O宇"],["t12","周O昀"],["t12","柳O慧"],["t12","姜O宏"],
+  ["t13","林O明"],["t13","黃O玲"],["t13","王O孝"],["t13","陳O慧"],["t13","郭O美"],["t13","吳O華"],["t13","楊O桃"],["t13","丁O民"],
+  // Table 14 — same list as 8 (per KAI).
+  ["t14","謝O村"],["t14","謝O涵"],["t14","謝O波"],["t14","謝O寬/謝O頡"],["t14","謝O麟"],["t14","謝O揚"],["t14","張O銜"],
+  ["t15","徐O怡"],["t15","徐O英"],["t15","徐O容"],["t15","徐O良"],
+  ["t16","王O慧"],["t16","蕭O仁"],["t16","顧O瑄"],["t16","何O楠"],["t16","劉O漢"],["t16","張O茵"],["t16","李O瑩"],["t16","李O朋"],
+  ["t17","姚O漩"],["t17","黃O瞳"],["t17","曾O敏"],["t17","孫O瀅"],["t17","李O璇"],["t17","簡O玲"],["t17","孫O涵"],
+  ["t18","陳O驛"],["t18","呂O維"],
+];
+
+const GUESTS = RAW_GUESTS.map(([tableKey, name]) => ({ tableKey, name }));
+
+/* ---------- RENDER ---------- */
+const chart = document.getElementById('chart');
+const tip   = document.getElementById('tip');
+
+// map key -> element
+const nodeByKey = { stage: chart.querySelector('[data-key="stage"]'),
+                    booth: chart.querySelector('[data-key="booth"]') };
+
+const groupedGuests = {}; // tableKey -> [names]
+GUESTS.forEach(g => {
+  (groupedGuests[g.tableKey] = groupedGuests[g.tableKey] || []).push(g.name);
+});
+
+// Render table nodes
+TABLES.forEach(t=>{
+  const el = document.createElement('div');
+  el.className = 'table-node' + (t.type==='head' ? ' head':'');
+  el.dataset.key = t.key;
+  el.style.left   = t.x + '%';
+  el.style.top    = t.y + '%';
+  el.style.width  = t.size + '%';
+  el.style.aspectRatio = '1 / 1';
+  el.innerHTML = `<div class="num">${t.num}</div>${t.label?`<div class="label">${t.label}</div>`:''}`;
+  chart.insertBefore(el, chart.querySelector('.dim-layer'));
+  nodeByKey[t.key] = el;
+
+  el.addEventListener('mouseenter', () => showTip(t.key, el));
+  el.addEventListener('mousemove',  () => {/* tip pos fixed to element */});
+  el.addEventListener('mouseleave', hideTip);
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    focusTable(t.key);
+  });
+});
+
+// Also show guest list on stage/booth? They have no guests — skip.
+// Clicking empty chart area = clear focus
+chart.addEventListener('click', (e)=>{
+  if (e.target === chart || e.target.classList.contains('dim-layer')){
+    clearFocus();
+  }
+});
+
+/* ---------- TOOLTIP ---------- */
+function tableMeta(key){ return TABLES.find(t => t.key === key); }
+
+function showTip(key, anchorEl, highlightName){
+  const meta = tableMeta(key);
+  if (!meta) return;
+  const names = groupedGuests[key] || [];
+  const titleLabel = meta.label ? `${meta.num} · ${meta.label}` : meta.num;
+  const listHtml = names.length
+    ? `<ul>${names.map(n => `<li class="${highlightName && n===highlightName ? 'highlight':''}">${n}</li>`).join('')}</ul>`
+    : `<div style="color:var(--muted-ink);font-size:13px;">（此桌名單待安排）</div>`;
+  tip.innerHTML = `<div class="tip-title">${titleLabel}</div>${listHtml}`;
+
+  // Default: position ABOVE the anchor (tip top edge aligns with anchor top, then translate up).
+  tip.classList.remove('below');
+
+  const chartRect = chart.getBoundingClientRect();
+  const aRect     = anchorEl.getBoundingClientRect();
+  const anchorCx  = (aRect.left - chartRect.left) + aRect.width / 2;
+  const anchorTop = aRect.top - chartRect.top;        // relative to chart
+  const anchorBot = aRect.bottom - chartRect.top;
+
+  // Place first assuming ABOVE, measure, then decide.
+  tip.style.left = anchorCx + 'px';
+  tip.style.top  = anchorTop + 'px';
+  tip.classList.add('show');
+  tip.setAttribute('aria-hidden','false');
+
+  requestAnimationFrame(()=>{
+    const tipH = tip.offsetHeight;
+    const tipW = tip.offsetWidth;
+    const gap  = 14;
+
+    // Flip only if it would overflow the TOP of the chart.
+    const wouldOverflowTop = (anchorTop - gap - tipH) < 4;
+    if (wouldOverflowTop){
+      tip.classList.add('below');
+      tip.style.top = anchorBot + 'px';
+    } else {
+      tip.classList.remove('below');
+      tip.style.top = anchorTop + 'px';
+    }
+
+    // Clamp horizontally so the card stays inside the chart.
+    const half = tipW / 2;
+    let cx = anchorCx;
+    if (cx - half < 6)                      cx = half + 6;
+    if (cx + half > chart.clientWidth - 6)  cx = chart.clientWidth - half - 6;
+    tip.style.left = cx + 'px';
+  });
+}
+function hideTip(){
+  tip.classList.remove('show','below');
+  tip.setAttribute('aria-hidden','true');
+}
+
+/* ---------- FOCUS / DIM ---------- */
+let focusedKey = null;
+function focusTable(key, highlightName){
+  focusedKey = key;
+  chart.classList.add('focused');
+  Object.entries(nodeByKey).forEach(([k, el])=>{
+    if (!el) return;
+    el.classList.toggle('focus', k === key);
+  });
+  const el = nodeByKey[key];
+  if (el){
+    showTip(key, el, highlightName);
+    // keep tip visible while focused — override pointer rules
+    tip.classList.add('show');
+  }
+}
+function clearFocus(){
+  focusedKey = null;
+  chart.classList.remove('focused');
+  Object.values(nodeByKey).forEach(el => el && el.classList.remove('focus'));
+  hideTip();
+}
+
+// ESC to clear
+document.addEventListener('keydown', e=>{
+  if (e.key === 'Escape'){ clearFocus(); closeSuggestions(); searchInput.blur(); }
+});
+
+/* ---------- SEARCH ---------- */
+const searchInput = document.getElementById('search');
+const suggestions = document.getElementById('suggestions');
+const clearBtn    = document.getElementById('clearBtn');
+
+function normalize(s){ return (s||'').toString().toLowerCase().trim(); }
+
+// Fuzzy match: substring OR initial-letter (for Chinese, substring is enough; for "Kev" -> "Kevin" substring works).
+function matches(q, name){
+  if (!q) return false;
+  const nq = normalize(q);
+  return normalize(name).includes(nq);
+}
+
+function highlightMatch(name, q){
+  if (!q) return name;
+  const nq = normalize(q);
+  const idx = normalize(name).indexOf(nq);
+  if (idx < 0) return name;
+  return name.slice(0, idx) + '<mark>' + name.slice(idx, idx+q.length) + '</mark>' + name.slice(idx+q.length);
+}
+
+let activeIdx = -1;
+let currentMatches = [];
+
+function renderSuggestions(q){
+  if (!q){ closeSuggestions(); return; }
+  currentMatches = GUESTS.filter(g => matches(q, g.name)).slice(0, 40);
+  if (currentMatches.length === 0){
+    suggestions.innerHTML = `<div class="sugg-empty">沒有找到符合「${q}」的賓客</div>`;
+    suggestions.classList.add('show');
+    activeIdx = -1;
+    return;
+  }
+  suggestions.innerHTML = currentMatches.map((g, i) => {
+    const t = tableMeta(g.tableKey);
+    const tableLabel = t ? (t.num === '主桌' ? '主桌' : `${t.num} · ${t.label}`) : '';
+    return `<div class="sugg-item" role="option" data-i="${i}">
+      <span class="sugg-name">${highlightMatch(g.name, q)}</span>
+      <span class="sugg-table">${tableLabel}</span>
+    </div>`;
+  }).join('');
+  suggestions.classList.add('show');
+  activeIdx = -1;
+}
+
+function closeSuggestions(){
+  suggestions.classList.remove('show');
+  suggestions.innerHTML = '';
+  activeIdx = -1;
+  currentMatches = [];
+}
+
+searchInput.addEventListener('input', e=>{
+  const q = e.target.value;
+  clearBtn.classList.toggle('show', !!q);
+  renderSuggestions(q);
+});
+searchInput.addEventListener('focus', e=>{
+  if (e.target.value) renderSuggestions(e.target.value);
+});
+
+suggestions.addEventListener('click', e=>{
+  const item = e.target.closest('.sugg-item');
+  if (!item) return;
+  pickSuggestion(+item.dataset.i);
+});
+suggestions.addEventListener('mousemove', e=>{
+  const item = e.target.closest('.sugg-item');
+  if (!item) return;
+  setActive(+item.dataset.i);
+});
+
+function setActive(i){
+  activeIdx = i;
+  [...suggestions.querySelectorAll('.sugg-item')].forEach((el, idx)=>{
+    el.classList.toggle('active', idx === i);
+  });
+}
+
+function pickSuggestion(i){
+  const g = currentMatches[i];
+  if (!g) return;
+  searchInput.value = g.name;
+  clearBtn.classList.add('show');
+  closeSuggestions();
+  focusTable(g.tableKey, g.name);
+  // scroll chart into view on mobile
+  chart.scrollIntoView && false; // per guidelines, avoid scrollIntoView
+}
+
+searchInput.addEventListener('keydown', e=>{
+  if (!suggestions.classList.contains('show')) return;
+  if (e.key === 'ArrowDown'){ e.preventDefault(); setActive(Math.min(activeIdx+1, currentMatches.length-1)); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); setActive(Math.max(activeIdx-1, 0)); }
+  else if (e.key === 'Enter'){
+    e.preventDefault();
+    if (activeIdx >= 0) pickSuggestion(activeIdx);
+    else if (currentMatches.length > 0) pickSuggestion(0);
+  }
+});
+
+clearBtn.addEventListener('click', ()=>{
+  searchInput.value = '';
+  clearBtn.classList.remove('show');
+  closeSuggestions();
+  clearFocus();
+  searchInput.focus();
+});
+
+// Click outside suggestions closes them
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.search-wrap')) closeSuggestions();
+});
+</script>
+</body>
+</html>
