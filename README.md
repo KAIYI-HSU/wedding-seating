@@ -1,22 +1,61 @@
-# CODING AGENTS: READ THIS FIRST
+# 互動式婚禮賓客座位表
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+一個單檔、純前端的互動式婚禮座位表網頁，讓賓客可透過姓名搜尋快速定位自己的座位。
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+🔗 **公開網址**：<https://kaiyi-hsu.github.io/wedding-seating/>
 
-## What you should do — IMPORTANT
+## 功能
 
-**Read `untitled/project/互動式座位表.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+- 🔍 **姓名搜尋**：輸入姓名即時過濾，選取後自動高亮對應桌位
+- 🪑 **Hover 預覽**：滑鼠移到任一桌位即顯示該桌賓客名單
+- 🎯 **桌位聚焦**：點擊桌位後其他區域暗化，突顯目標
+- ⌨️ **鍵盤操作**：`↑` / `↓` 切換建議、`Enter` 選取、`Esc` 清除聚焦
+- 📱 **響應式設計**：手機、平板、桌機皆可順暢使用
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## 隱私
 
-## About the design files
+- 所有中文姓名已去識別化：**第二個字以 `O` 取代**（例：`王小明` → `王O明`）
+- 原始未去識別化名單（`CSV`、原始座位圖）透過 `.gitignore` 排除，**不會進入公開 repo**
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## 技術
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+單一 HTML 檔案，無需建置工具或 npm 相依：
 
-## Bundle contents
+- 純 HTML / CSS / JavaScript（`index.html`）
+- Google Fonts：`Noto Serif TC`、`Cormorant Garamond`
+- 部署：GitHub Pages（main 分支根目錄）
 
-- `untitled/README.md` — this file
-- `untitled/project/` — the `互動式婚禮賓客座位表` project files (HTML prototypes, assets, components)
+## 本地預覽
+
+直接用瀏覽器開啟即可：
+
+```bash
+open index.html
+```
+
+或啟動本地伺服器：
+
+```bash
+python3 -m http.server 8000
+# 瀏覽 http://localhost:8000
+```
+
+## 更新名單
+
+編輯 `index.html` 中的 `RAW_GUESTS` 陣列，格式為 `["桌號key", "姓名"]`：
+
+```js
+const RAW_GUESTS = [
+  ["main", "新郎新娘"],
+  ["t2", "王O明"],
+  // ...
+];
+```
+
+桌位配置（座標、標籤）在 `TABLES` 陣列調整。
+
+推送至 `main` 後 GitHub Pages 會於 1–2 分鐘內自動更新。
+
+## 授權
+
+私人婚禮用途，不提供對外授權。
