@@ -5,3 +5,6 @@
 # 公開 repo 只需要根目錄的 index.html
 project/
 uploads/
+
+# 信件草稿（本地使用，不公開）
+drafts/
