@@ -397,7 +397,7 @@ const TABLES = [
   { key:"t15",  num:"15",    label:"女方親友",    x:71, y:18,  size:16 },
   { key:"t16",  num:"16",    label:"ORP爪牙",    x:71, y:32,  size:16 },
   { key:"t17",  num:"17",    label:"女方大學同學", x:71, y:46, size:16 },
-  { key:"t18",  num:"18",    label:"好麻吉",      x:71, y:60,  size:16 },
+  { key:"t18",  num:"18",    label:"預備桌",      x:71, y:60,  size:16 },
 ];
 
 // Guests — built from the provided CSV.
@@ -405,10 +405,10 @@ const TABLES = [
 const RAW_GUESTS = [
   ["main","新郎新娘"],["main","楷O爸媽"],["main","予O爸媽"],["main","謝O村"],
   ["main","謝O章"],["main","歐O憲夫婦"],["main","黃O茹"],
-  ["t2","許O玲"],["t2","許O勇"],["t2","張O良"],["t2","黃O洋"],["t2","陳O明"],["t2","賴O宏"],
+  ["t2","許O玲"],["t2","許O勇"],["t2","張O良"],["t2","黃O洋"],["t2","陳O明"],["t2","賴O宏"],["t2","呂O維"],
   ["t3","歐O憲"],
   ["t4","素O"],["t4","秋O"],["t4","雪O"],["t4","麗O"],["t4","麗O"],["t4","燕O"],["t4","戍O"],["t4","云O"],
-  ["t5","強O哲"],["t5","張O"],["t5","魏O珊"],["t5","謝O儒"],["t5","羅O泉"],["t5","施O廷"],["t5","徐O昕"],
+  ["t5","強O哲"],["t5","張O"],["t5","魏O珊"],["t5","謝O儒"],["t5","羅O泉"],["t5","施O廷"],["t5","徐O昕"],["t5","陳O驛"],
   ["t6","郭O輝"],["t6","郭O佳"],["t6","劉O軒"],["t6","游O奇"],["t6","陳O君"],
   ["t7","蘇O桃"],["t7","鄭O升"],["t7","沈O毅"],["t7","沈O靜"],["t7","楊O田"],["t7","陳O怡"],
   // 8 & 14 女方親友 — CSV groups them. We'll assign them all to table 8 (primary), and also show on 14 if you'd prefer. To keep it unambiguous, assign to 8 only.
@@ -423,7 +423,6 @@ const RAW_GUESTS = [
   ["t15","徐O怡"],["t15","徐O英"],["t15","徐O容"],["t15","徐O良"],
   ["t16","王O慧"],["t16","蕭O仁"],["t16","顧O瑄"],["t16","何O楠"],["t16","劉O漢"],["t16","張O茵"],["t16","李O瑩"],["t16","李O朋"],
   ["t17","姚O漩"],["t17","黃O瞳"],["t17","曾O敏"],["t17","孫O瀅"],["t17","李O璇"],["t17","簡O玲"],["t17","孫O涵"],
-  ["t18","陳O驛"],["t18","呂O維"],
 ];
 
 const GUESTS = RAW_GUESTS.map(([tableKey, name]) => ({ tableKey, name }));
